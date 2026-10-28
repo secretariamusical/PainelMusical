@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Painel Musical — Secretaria Musical Itanhaém</title>
+<style>
+:root{--navy:#142846;--navy2:#203b61;--gold:#c6a35b;--gold2:#ead8a8;--ink:#202938;--muted:#687386;--bg:#f4f6fa;--line:#e5e9f0;--white:#fff;--red:#b83f46;--blue:#315e99;--green:#21845b;--shadow:0 16px 40px rgba(24,42,68,.09)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg)}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}.muted{color:var(--muted)}.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:750}.pill:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}.pill-novo{color:#315e99;background:#eaf1fb}.pill-concluido{color:#19734c;background:#e4f5ec}.pill-faltando-informacao{color:#ad363e;background:#fdebec}.pill-cancelado{color:#687386;background:#eef0f4}
+.btn{border:1px solid transparent;border-radius:10px;padding:10px 14px;font-weight:700;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.18s;white-space:nowrap}.btn-primary{background:var(--navy);color:white}.btn-primary:hover{background:var(--navy2)}.btn-gold{background:var(--gold);color:#17253a}.btn-gold:hover{background:#d2b675}.btn-light{background:white;color:var(--navy);border-color:var(--line)}.btn-light:hover{background:#f7f9fc}.btn-danger{background:#fdebec;color:#b83f46;border-color:#f2c9cc}.btn-small{padding:7px 10px;font-size:12px}.icon-btn{height:38px;width:38px;border:1px solid var(--line);border-radius:10px;background:white;color:var(--navy);display:grid;place-items:center;font-size:17px}
+.field{display:flex;flex-direction:column;gap:6px}.field label{font-size:12px;font-weight:750;color:#475267}.field input,.field select,.field textarea{width:100%;border:1px solid #dce2eb;border-radius:9px;background:#fff;padding:10px 11px;outline:none}.field input:focus,.field select:focus{border-color:#8195b2;box-shadow:0 0 0 3px rgba(65,99,145,.10)}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.span2{grid-column:span 2}
+#loginView{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;background:white}.login-brand{background:var(--navy);color:white;padding:48px;display:flex;flex-direction:column;justify-content:space-between}.brand-mark{display:flex;align-items:center;gap:12px}.brand-seal{width:47px;height:47px;border:1px solid var(--gold);color:var(--gold2);border-radius:50%;display:grid;place-items:center;font-size:23px}.brand-title{font:700 17px Georgia,serif;letter-spacing:.14em}.brand-sub{color:#e5d2a3;font-size:9px;font-weight:750;letter-spacing:.12em;margin-top:5px}.brand-headline{font:500 48px/1.1 Georgia,serif;margin:86px 0 20px}.brand-copy{color:#c8d4e2;line-height:1.7;font-size:14px}.login-main{display:flex;align-items:center;justify-content:center;padding:40px}.login-box{width:min(420px,100%)}.login-box h1{font:600 34px Georgia,serif;color:var(--navy);margin:10px 0}.login-box .intro{color:var(--muted);font-size:13px;margin-bottom:27px}.login-form{display:grid;gap:15px}.login-form .btn{width:100%;padding:13px}
+#appView{display:flex;min-height:100vh}.sidebar{width:248px;background:var(--navy);color:white;display:flex;flex-direction:column;flex:0 0 248px;padding:23px 14px}.nav button{border:0;background:transparent;color:#c7d2e0;border-radius:9px;padding:11px 12px;display:flex;gap:12px;align-items:center;text-align:left;font-size:13px;font-weight:600;width:100%;margin-bottom:4px}.nav button.active{background:rgba(207,174,106,.16);color:#f2d99b;box-shadow:inset 3px 0 var(--gold)}.app-main{flex:1;min-width:0}.topbar{height:78px;background:white;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px}.content{padding:30px;max-width:1400px;margin:0 auto}
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:25px}.page-head h1{font:600 30px Georgia,serif;color:var(--navy);margin:7px 0}.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:21px}.kpi-card{border:1px solid var(--line);background:white;border-radius:14px;padding:17px}.kpi-number{font-size:29px;font-weight:800;color:var(--navy);margin:14px 0 6px}
+.table-panel{border:1px solid var(--line);background:white;border-radius:14px;overflow:hidden}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}th{text-align:left;background:#f9fafc;color:#758094;font-size:11px;padding:12px 16px;border-bottom:1px solid var(--line)}td{padding:13px 16px;border-bottom:1px solid #edf0f4;color:#394459}.row-action{background:transparent;border:0;color:#274b7a;font-size:12px;font-weight:800;padding:5px;cursor:pointer}
+.modal-backdrop{position:fixed;inset:0;background:rgba(13,27,47,.47);backdrop-filter:blur(4px);z-index:900;display:flex;justify-content:center;align-items:center;padding:18px}.modal{width:min(720px,100%);max-height:90vh;overflow:auto;background:white;border-radius:17px}.modal.lg{width:min(880px,100%)}.modal-head{background:var(--navy);color:white;padding:20px 22px;display:flex;justify-content:space-between}.modal-body{padding:20px 22px}.modal-foot{background:white;border-top:1px solid var(--line);padding:14px 22px;display:flex;justify-content:flex-end;gap:9px}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.detail-field{border:1px solid #edf0f4;background:#fafbfd;border-radius:9px;padding:11px}.detail-field.full{grid-column:span 2}.message-box{background:#fff8e8;border:1px solid #eadcb9;border-radius:10px;padding:12px;font-size:12px;margin-top:10px}
+.toast-wrap{position:fixed;right:20px;bottom:20px;z-index:2200;display:grid;gap:8px}.toast{background:#162c49;color:#fff;padding:12px 15px;border-radius:10px;font-size:12px}.toast.error{background:#9c3039}
+@media(max-width:760px){#loginView{grid-template-columns:1fr}.login-brand{display:none}.kpi-grid{grid-template-columns:1fr 1fr}.sidebar{position:fixed;left:-270px;height:100vh;z-index:800;transition:left .2s}.sidebar.open{left:0}.form-grid{grid-template-columns:1fr}.span2{grid-column:auto}}
+</style>
+</head>
+<body>
+<div id="loginView">
+  <section class="login-brand">
+    <div class="brand-mark"><div class="brand-seal">♬</div><div><div class="brand-title">PAINEL MUSICAL</div><div class="brand-sub">SECRETARIA MUSICAL ITANHAÉM</div></div></div>
+    <div><h2 class="brand-headline">Uma gestão mais simples para servir melhor.</h2><p class="brand-copy">Acompanhe solicitações, organize as casas de oração e tenha uma visão clara de cada etapa.</p></div>
+    <div style="font-size:11px;color:#bdcad9">PLATAFORMA DE GESTÃO DA SECRETARIA MUSICAL</div>
+  </section>
+  <section class="login-main">
+    <div class="login-box">
+      <div class="eyebrow" style="color:#9a7a36;font-weight:850;font-size:10px;text-transform:uppercase">Acesso à plataforma</div>
+      <h1>Bem-vindo de volta.</h1>
+      <p class="intro">Entre com o seu e-mail e a sua senha para acessar o Painel Musical.</p>
+      <form class="login-form" id="loginForm">
+        <div class="field"><label for="loginEmail">E-mail</label><input id="loginEmail" type="email" placeholder="nome@exemplo.com" required /></div>
+        <div class="field"><label for="loginPassword">Senha</label><input id="loginPassword" type="password" placeholder="Digite sua senha" required /></div>
+        <div id="loginError" class="small" style="color:var(--red);display:none"></div>
+        <button type="submit" class="btn btn-primary">Entrar <span>→</span></button>
+      </form>
+    </div>
+  </section>
+</div>
+<div id="appView" class="hidden"></div>
+<div id="modalRoot"></div>
+<div id="loaderRoot"></div>
+<div id="toastRoot" class="toast-wrap"></div>
+
+<script>
+'use strict';
+// COLE AQUI A URL DO SEU APPS SCRIPT QUE TERMINA EM /exec
+const API_URL = 'SUA_URL_DO_APPS_SCRIPT_AQUI'; 
+
+let cityData=[],churches=[],instruments=[],musicians=[],letters=[],registrations=[],archived=[],libraryFolders=[],libraryItems=[],appUsers=[];
+let appConfig={criacaoPermitida:true,diasArquivamento:30};
+let sessionToken=localStorage.getItem('pm_token')||null;
+let currentUser=null, selectedCityId=null, selectedChurchId=null, currentPage='dashboard', mobileOpen=false, busy=false;
+let currentLibraryFolderId=null;
+let requestSort={key:null,dir:'asc'}, musicianSort={key:null,dir:'asc'};
+const pageMeta={dashboard:['Visão geral','Resumo das informações e atividades.'],churches:['Igrejas','Consulte as casas de oração.'],letters:['Cartas','Acompanhe solicitações e correções.'],registrations:['Cadastros','Gerencie pedidos de cadastros.'],musicians:['Músicos','Base oficial de músicos.'],library:['Biblioteca','Materiais e documentos.'],archives:['Arquivos','Solicitações concluídas.'],users:['Usuários','Contas e permissões.']};
+const statusNames={NOVO:'Novo',EM_ANDAMENTO:'Em andamento',FALTANDO_INFORMACAO:'Faltando informação',CONCLUIDO:'Concluído',CANCELADO:'Cancelado'};
+const typeNames={ENSAIO_LOCAL:'Ensaio local',REUNIAO_JOVENS:'Reunião de jovens',CULTO_OFICIAL:'Culto oficial',TROCA_INSTRUMENTO:'Troca de instrumento',OFICIALIZACAO:'Oficialização'};
+const conditionNames={CANDIDATO:'Candidato',ENSAIO_LOCAL:'Ensaio local',REUNIAO_JOVENS:'Reunião de jovens',CULTO_OFICIAL:'Culto oficial',OFICIALIZADO:'Oficializado',FALECIDO:'Falecido',MUDOU_SE:'Mudou-se',INATIVO:'Inativo',LICENCA:'Licença'};
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmtDate(v){if(!v)return '—';const d=new Date(v);return isNaN(d)?esc(v):d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}).replace('.','');}
+function fmtDateTime(v){if(!v)return '—';const d=new Date(v);return isNaN(d)?esc(v):d.toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}).replace('.','');}
+function getChurch(id){return churches.find(c=>c.id===id)||{id:'',name:'Igreja não identificada',cityId:''};}
+function getCity(id){return cityData.find(c=>c.id===id)||{id:'',name:'Cidade não identificada',state:'SP'};}
+function getInstrument(id){return instruments.find(i=>i.id===id)?.name||'—';}
+function getNape(id){return instruments.find(i=>i.id===id)?.nape||'OUTROS';}
+function isSecretary(){return currentUser?.role==='secretaria';}
+function cityScope(){return isSecretary()||isRegional();}
+function isRegional(){const role=String(currentUser?.role||'').toLowerCase().replaceAll('_',' ');return ['regional','encarregado regional','visualizador'].includes(role);}
+function canCreateRole(){return !!currentUser&&!isSecretary()&&!isRegional()&&!!currentUser.canWrite;}
+function isCorrection(status){return status==='FALTANDO_INFORMACAO';}
+function cityChurches(){return churches.filter(c=>c.cityId===selectedCityId);}
+function itemVisible(item){const church=getChurch(item.churchId);if(!church)return false;if(isSecretary()||isRegional())return (currentUser?.cityIds||[]).includes(church.cityId)&&church.cityId===selectedCityId&&(!selectedChurchId||church.id===selectedChurchId);return (currentUser?.churchIds||[]).includes(item.churchId)&&item.churchId===selectedChurchId;}
+const ENCARGADO_CONDICOES_VISIVEIS=new Set(['CANDIDATO','ENSAIO_LOCAL','REUNIAO_JOVENS','CULTO_OFICIAL','OFICIALIZADO']);
+const HIDDEN_CONDITIONS=new Set(['FALECIDO','MUDOU_SE','INATIVO','LICENCA']);
+function visibleMusicians(){return musicians.filter(m=>{const inScope=(isSecretary()||isRegional())?((currentUser?.cityIds||[]).includes(getChurch(m.churchId).cityId)&&getChurch(m.churchId).cityId===selectedCityId&&(!selectedChurchId||m.churchId===selectedChurchId)):(m.churchId===selectedChurchId&&(currentUser?.churchIds||[]).includes(m.churchId));if(!inScope)return false;if(!isSecretary()&&!isRegional())return m.active!==false&&ENCARGADO_CONDICOES_VISIVEIS.has(m.condition);return true;});}
+function visibleLetters(){return letters.filter(itemVisible);}
+function visibleRegistrations(){return registrations.filter(itemVisible);}
+function initials(name){return (name||'').split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();}
+function statusPill(status){let cl=String(status||'NOVO').toLowerCase().replaceAll('_','-');return `<span class="pill pill-${cl}">${esc(statusNames[status]||status||'Novo')}</span>`;}
+function roleLabel(){return ({secretaria:'Secretaria',regional:'Encarregado regional',visualizador:'Visualizador'})[currentUser?.role]||'Encarregado';}
+function showToast(msg,type='success'){const root=document.getElementById('toastRoot');const el=document.createElement('div');el.className='toast '+type;el.textContent=msg;root.appendChild(el);setTimeout(()=>el.remove(),3600);}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+
+async function runWithLoader(title,task){
+  if(busy)return false;busy=true;
+  const root=document.getElementById('loaderRoot');
+  root.innerHTML=`<div style="position:fixed;inset:0;background:rgba(16,31,52,.38);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:2000;"><div style="background:white;padding:30px;border-radius:12px;text-align:center;"><h3>${esc(title)}</h3><p>Processando...</p></div></div>`;
+  try{ await task(); root.innerHTML=''; busy=false; return true; }
+  catch(e){ root.innerHTML=''; busy=false; showToast(e.message||'Erro.', 'error'); return false; }
+}
+
+// API COM FETCH (Para GitHub Pages)
+async function api(fn, ...args) {
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ fn, args })
+  });
+  const res = await response.json();
+  if (!res || res.ok === false) {
+    if (res && res.code === 'SESSAO_EXPIRADA') expireSession();
+    throw new Error((res && res.error) || 'Falha na operação.');
+  }
+  return res;
+}
+
+function expireSession(){ logout(false); showToast('Sessão expirada.','error'); }
+
+function applyAppData(d){
+  if(!d)return;
+  cityData=d.cities||[];churches=d.churches||[];instruments=d.instruments||[];musicians=d.musicians||[];letters=d.letters||[];registrations=d.registrations||[];archived=d.archived||[];libraryFolders=d.libraryFolders||[];libraryItems=d.libraryItems||[];appUsers=d.users||[];
+  appConfig=d.config||appConfig;
+  if(currentUser&&d.user){currentUser.cityIds=[...(d.user.cityIds||[])];currentUser.churchIds=[...(d.user.churchIds||[])];currentUser.contexts=[...(d.user.contexts||[])];}
+}
+function applyContext(c){currentUser.role=c.role;currentUser.canWrite=!!c.canWrite;if(c.type==='city'){selectedCityId=c.cityId;selectedChurchId=null;}else{selectedChurchId=c.churchId;selectedCityId=c.cityId||getChurch(c.churchId).cityId;}currentPage='dashboard';renderApp();}
+
+async function initSession() {
+  if(!sessionToken) { document.getElementById('loginView').classList.remove('hidden'); return; }
+  try {
+    const res = await api('apiGetAppData', sessionToken);
+    startSession(res.data.user);
+    applyAppData(res.data);
+    document.getElementById('loginView').classList.add('hidden');
+    if(!currentUser.role) showContextPicker(); else renderApp();
+  } catch(e) {
+    logout(false);
+  }
+}
+function startSession(u){currentUser={id:u.id,name:u.name,email:u.email,avatar:u.avatar,role:null,canWrite:false,churchIds:[...(u.churchIds||[])],cityIds:[...(u.cityIds||[])],contexts:[...(u.contexts||[])]};if(currentUser.contexts.length===1&&currentUser.contexts[0].type==='church')applyContext(currentUser.contexts[0]);}
+
+async function loginFormSubmit(e){
+  e.preventDefault();
+  const email=document.getElementById('loginEmail').value.trim(),password=document.getElementById('loginPassword').value;
+  const err=document.getElementById('loginError');err.style.display='none';
+  if(!email||!password){err.textContent='Informe e-mail e senha.';err.style.display='block';return;}
+  const ok = await runWithLoader('Validando...', async()=>{
+    const res = await api('apiLogin', email, password);
+    sessionToken=res.token;
+    localStorage.setItem('pm_token', sessionToken); // Salva para não deslogar
+    startSession(res.data.user);
+    applyAppData(res.data);
+  });
+  if(ok){ document.getElementById('loginPassword').value=''; if(currentUser.role)renderApp(); else showContextPicker(); }
+}
+
+function logout(callServer=true){
+  localStorage.removeItem('pm_token');
+  if(callServer&&sessionToken) api('apiLogout', sessionToken).catch(()=>{});
+  sessionToken=null;currentUser=null;selectedCityId=null;selectedChurchId=null;
+  document.getElementById('appView').classList.add('hidden');
+  document.getElementById('appView').innerHTML='';
+  document.getElementById('loginView').classList.remove('hidden');
+  document.getElementById('loginForm').reset();
+}
+
+function showModal(html,size=''){document.getElementById('modalRoot').innerHTML=`<div class="modal-backdrop" data-action="backdrop-close"><div class="modal ${size}">${html}</div></div>`;}
+function closeModal(){document.getElementById('modalRoot').innerHTML='';}
+function contextPickerHTML(){
+ const cityCtx=(currentUser.contexts||[]).filter(c=>c.type==='city'),churchCtx=(currentUser.contexts||[]).filter(c=>c.type==='church');
+ const roleName=r=>({secretaria:'Secretaria',regional:'Encarregado regional',visualizador:'Visualizador'})[r]||'Encarregado';
+ const head=(cityCtx.length&&!churchCtx.length)?['Selecionar contexto','Qual cidade deseja gerenciar?','As telas mostrarão dados da cidade escolhida.']:(!cityCtx.length?['Selecionar congregação','Qual comum / congregação deseja gerenciar?','Você tem acesso a mais de uma igreja.']:['Selecionar contexto','Qual cidade ou congregação deseja acessar?','Você tem acessos em mais de um lugar.']);
+ const cityCards=cityCtx.map(x=>{const c=getCity(x.cityId);return `<button type="button" class="kpi-card" data-action="choose-city" data-id="${c.id}" style="text-align:left;cursor:pointer"><h3>${esc(c.name)}</h3><div class="sub">${esc(roleName(x.role))}</div><div style="margin-top:10px;font-weight:900">Acessar →</div></button>`}).join('');
+ const churchCards=churchCtx.map(x=>{const c=getChurch(x.churchId);return `<button type="button" class="kpi-card" data-action="choose-church" data-id="${c.id}" style="text-align:left;cursor:pointer"><h3>${esc(c.name)}</h3><div class="sub">${esc(getCity(c.cityId).name)}</div><div style="margin-top:10px;font-weight:900">Acessar →</div></button>`}).join('');
+ return `<div class="modal-head"><div><h2>${head[1]}</h2><p>${head[2]}</p></div></div><div class="modal-body"><div class="kpi-grid" style="grid-template-columns:1fr 1fr">${cityCards}${churchCards}</div></div><div class="modal-foot"><button class="btn btn-light" data-action="logout">Sair</button></div>`;}
+function showContextPicker(){showModal(contextPickerHTML(),'lg');}
+function chooseContext(cityId,churchId){const c=(currentUser.contexts||[]).find(x=>cityId?(x.type==='city'&&x.cityId===cityId):(x.type==='church'&&x.churchId===churchId));if(!c)return;closeModal();applyContext(c);}
+
+function navItems(){let base=[['dashboard','Visão geral'],['letters','Cartas'],['registrations','Cadastros'],['musicians','Músicos'],['library','Biblioteca']];if(isSecretary())base.splice(1,0,['churches','Igrejas']),base.push(['archives','Arquivos'],['users','Usuários']);return base;}
+function renderApp(){
+  const app=document.getElementById('appView');
+  app.classList.remove('hidden');
+  const nav=navItems();
+  const meta=pageMeta[currentPage]||pageMeta.dashboard;
+  const context=cityScope()?(selectedChurchId?`${getChurch(selectedChurchId).name}`:`${getCity(selectedCityId).name}`):`${getChurch(selectedChurchId).name}`;
+  app.innerHTML=`
+    <aside class="sidebar" id="sidebar">
+      <div style="padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:20px"><b>PAINEL MUSICAL</b></div>
+      <nav class="nav">${nav.map(([id,label])=>`<button data-action="navigate" data-page="${id}" class="${currentPage===id?'active':''}">${label}</button>`).join('')}</nav>
+    </aside>
+    <div class="app-main">
+      <header class="topbar">
+        <div><span class="muted" style="font-size:11px">${esc(meta[0])}</span><br><b>${esc(context)}</b></div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn btn-light btn-small" data-action="switch-context">Trocar Contexto</button>
+          <div style="text-align:right"><b>${esc(currentUser.name)}</b><br><small>${esc(roleLabel())}</small></div>
+          <button class="btn btn-light btn-small" data-action="logout">Sair</button>
+        </div>
+      </header>
+      <main class="content">${renderCurrentPage()}</main>
+    </div>`;
+  if(currentPage==='dashboard'&&!isSecretary()&&!isRegional())setTimeout(maybeShowPendingLetterPopup,180);
+}
+function pageHeader(kicker,title,desc,actions=''){return `<div class="page-head"><div><div style="font-size:10px;color:#a2813e;font-weight:850;text-transform:uppercase">${kicker}</div><h1>${title}</h1><p>${desc}</p></div><div>${actions}</div></div>`;}
+
+// --- LÓGICA DO DASHBOARD E PENDÊNCIAS CORRIGIDA AQUI ---
+function pendingItemsForDashboard(){
+  const l = visibleLetters().filter(r=>r.status==='FALTANDO_INFORMACAO').map(x=>({...x, _kind:'letter'}));
+  const r = visibleRegistrations().filter(r=>r.status==='FALTANDO_INFORMACAO').map(x=>({...x, _kind:'registration'}));
+  return [...l, ...r];
+}
+function renderDashboard(){
+ const sL = visibleLetters().filter(x=>!['CONCLUIDO','CANCELADO'].includes(x.status)).length;
+ const sR = visibleRegistrations().filter(x=>!['CONCLUIDO','CANCELADO'].includes(x.status)).length;
+ const pendingItems = pendingItemsForDashboard();
+
+ const pendingPanel = (!isSecretary()&&!isRegional()&&pendingItems.length) ? `<div class="table-panel" style="margin-bottom:20px;border-color:#f2c9cc">
+    <div style="padding:15px;background:#fff7f7;border-bottom:1px solid #f5d9db;color:#9d3039;font-weight:bold">Atenção: ${pendingItems.length} solicitação(ões) precisam de correção</div>
+    ${pendingItems.map(r=>`<div style="padding:15px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <b>${esc(r.number)} · ${esc(r.candidate||r.name)}</b>
+        <div style="font-size:12px;color:#666;margin-top:5px">${r._kind==='letter'?'Carta':'Cadastro'} · ${esc(getChurch(r.churchId).name)}</div>
+        <div style="background:#fff5f6;padding:8px;border-left:3px solid #bd454d;margin-top:8px;font-size:13px;color:#88313a"><b>Secretaria:</b> ${esc(r.correctionMessage||r.reply)}</div>
+      </div>
+      <button class="btn btn-primary btn-small" data-action="view-request" data-kind="${r._kind}" data-id="${r.id}">Abrir Ficha</button>
+    </div>`).join('')}
+  </div>` : '';
+
+ return `${pageHeader('PAINEL DE CONTROLE','Visão geral','Resumo das atividades.',`<button class="btn btn-light" data-action="refresh">↻ Atualizar</button>`)}
+ ${pendingPanel}
+ <div class="kpi-grid">
+   <div class="kpi-card"><div class="kpi-top">Músicos Ativos</div><div class="kpi-number">${visibleMusicians().filter(m=>m.active!==false).length}</div></div>
+   <div class="kpi-card"><div class="kpi-top">Cartas Abertas</div><div class="kpi-number">${sL}</div></div>
+   <div class="kpi-card"><div class="kpi-top">Cadastros Abertos</div><div class="kpi-number">${sR}</div></div>
+ </div>`;
+}
+
+function maybeShowPendingLetterPopup(){
+ if(!currentUser||isSecretary()||isRegional()||currentPage!=='dashboard')return;
+ const modalRoot=document.getElementById('modalRoot');if(!modalRoot||modalRoot.innerHTML.trim())return;
+ const unseen = pendingItemsForDashboard();
+ if(!unseen.length)return;
+ 
+ showModal(`<div class="modal-head" style="background:#9f323c"><div><h2>Atenção: Ação Necessária</h2><p>Você tem ${unseen.length} solicitação(ões) pendente(s) de correção.</p></div><button class="icon-btn" data-action="close-modal">×</button></div>
+ <div class="modal-body">
+   ${unseen.map(r=>`<div style="padding:15px;border-bottom:1px solid #eee">
+      <b>${esc(r.number)} · ${esc(r.candidate||r.name)}</b> ${statusPill(r.status)}
+      <div style="background:#fff5f6;padding:10px;border-left:3px solid #bd454d;margin:10px 0;font-size:13px;color:#88313a"><b>Secretaria:</b> ${esc(r.correctionMessage||r.reply)}</div>
+      <button class="btn btn-primary btn-small" data-action="view-request" data-kind="${r._kind}" data-id="${r.id}">Ver Ficha</button>
+   </div>`).join('')}
+ </div>
+ <div class="modal-foot"><button class="btn btn-light" data-action="close-modal">Fechar</button></div>`,'lg');
+}
+
+// --- OUTRAS PÁGINAS (Resumidas para o exemplo, mantenha as suas originais se necessário) ---
+function renderRequests(kind){
+  const isLetter=kind==='letter';
+  const arr=isLetter?visibleLetters():visibleRegistrations();
+  return `${pageHeader(isLetter?'SOLICITAÇÕES':'CADASTROS',isLetter?'Cartas':'Cadastros','Acompanhe os pedidos.',canCreateRole()?`<button class="btn btn-primary" data-action="${isLetter?'new-letter':'new-registration'}">＋ Nova Solicitação</button>`:'')}
+  <div class="table-panel"><div class="table-wrap"><table><thead><tr><th>Número</th><th>Nome</th><th>Igreja</th><th>Status</th><th>Ação</th></tr></thead><tbody>
+  ${arr.map(r=>`<tr><td>${esc(r.number)}</td><td>${esc(r.candidate||r.name)}</td><td>${esc(getChurch(r.churchId).name)}</td><td>${statusPill(r.status)}</td><td><button class="row-action" data-action="view-request" data-kind="${kind}" data-id="${r.id}">Ver Ficha</button></td></tr>`).join('')}
+  </tbody></table></div></div>`;
+}
+function renderMusicians(){
+  const arr=visibleMusicians();
+  return `${pageHeader('BASE OFICIAL','Músicos','Cadastro centralizado.',isSecretary()?'<button class="btn btn-primary" data-action="new-musician">＋ Cadastrar</button>':'')}
+  <div class="table-panel"><div class="table-wrap"><table><thead><tr><th>Nome</th><th>Instrumento</th><th>Condição</th><th>Ação</th></tr></thead><tbody>
+  ${arr.map(m=>`<tr><td>${esc(m.name)}</td><td>${esc(getInstrument(m.instrumentId))}</td><td>${esc(conditionNames[m.condition])}</td><td><button class="row-action" data-action="view-musician" data-id="${m.id}">Ver Ficha</button></td></tr>`).join('')}
+  </tbody></table></div></div>`;
+}
+function renderLibrary(){return pageHeader('BIBLIOTECA','Materiais','Documentos.');}
+function renderArchives(){return pageHeader('ARQUIVOS','Histórico','Solicitações concluídas.');}
+function renderUsers(){return pageHeader('USUÁRIOS','Gestão de Acesso','Contas.');}
+function renderChurches(){return pageHeader('IGREJAS','Casas de Oração','Selecione.');}
+
+function renderCurrentPage(){switch(currentPage){case'churches':return renderChurches();case'letters':return renderRequests('letter');case'registrations':return renderRequests('registration');case'musicians':return renderMusicians();case'library':return renderLibrary();case'archives':return renderArchives();case'users':return renderUsers();default:return renderDashboard();}}
+
+// --- MODAIS DE CADASTRO E VISUALIZAÇÃO (Ajuste na duplicação e no campo Comum) ---
+function musicianEditHTML(m=null){
+  // CORREÇÃO: Campo Comum removido, apenas Casa de Oração (Select)
+  return `<div class="modal-head"><div><h2>${m?'Editar Ficha':'Cadastrar Músico'}</h2></div><button class="icon-btn" data-action="close-modal">×</button></div>
+  <form id="musicianForm" data-edit-id="${m?.id||''}"><div class="modal-body"><div class="form-grid">
+    <div class="field span2"><label>Nome completo *</label><input name="name" required value="${esc(m?.name||'')}" /></div>
+    <div class="field"><label>Casa de Oração *</label><select name="churchId" required>${cityChurches().map(c=>`<option value="${c.id}" ${(m?.churchId||selectedChurchId)===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+    <div class="field"><label>Telefone *</label><input name="phone" required value="${esc(m?.phone||'')}" /></div>
+    <div class="field"><label>E-mail *</label><input type="email" name="email" required value="${esc(m?.email||'')}" /></div>
+    <div class="field"><label>Instrumento *</label><select name="instrumentId" required>${instruments.map(i=>`<option value="${i.id}" ${m?.instrumentId===i.id?'selected':''}>${esc(i.name)}</option>`).join('')}</select></div>
+    <div class="field"><label>Afinação *</label><input name="tuning" required value="${esc(m?.tuning||'')}" /></div>
+    <div class="field"><label>Condição *</label><select name="condition" required>${Object.keys(conditionNames).map(k=>`<option value="${k}" ${m?.condition===k?'selected':''}>${conditionNames[k]}</option>`).join('')}</select></div>
+    <div class="field"><label>Instrutor? *</label><select name="instructor" required><option value="false" ${m?.instructor===false?'selected':''}>Não</option><option value="true" ${m?.instructor===true?'selected':''}>Sim</option></select></div>
+    <div class="field"><label>Batizado? *</label><select name="baptized" required><option value="false" ${m?.baptized===false?'selected':''}>Não</option><option value="true" ${m?.baptized===true?'selected':''}>Sim</option></select></div>
+    <div class="field"><label>Data Batismo</label><input type="date" name="baptismDate" value="${esc(m?.baptismDate||'')}" /></div>
+  </div></div><div class="modal-foot"><button type="button" class="btn btn-light" data-action="close-modal">Cancelar</button><button type="submit" class="btn btn-gold">Salvar Ficha</button></div></form>`;
+}
+
+function viewRequest(kind,id){
+  const r=(kind==='letter'?letters:registrations).find(x=>x.id===id);if(!r)return;
+  // CORREÇÃO: Removida a duplicação da mensagem da secretaria
+  let body=`<div class="detail-grid">
+    <div class="detail-field full"><label>Nome</label><span>${esc(r.candidate||r.name)}</span></div>
+    <div class="detail-field full"><label>Igreja</label><span>${esc(getChurch(r.churchId).name)}</span></div>
+    <div class="detail-field"><label>Status</label><span>${statusPill(r.status)}</span></div>
+    <div class="detail-field"><label>Enviado em</label><span>${fmtDateTime(r.created)}</span></div>
+  </div>`;
+  
+  if(r.correctionMessage || r.reply){
+    body += `<div class="message-box"><b>Mensagem da Secretaria:</b><br>${esc(r.correctionMessage||r.reply)}</div>`;
+  }
+  
+  let foot=`<button class="btn btn-light" data-action="close-modal">Fechar</button>`;
+  if(canCreateRole()&&isCorrection(r.status))foot+=`<button class="btn btn-gold" data-action="edit-correction" data-kind="${kind}" data-id="${r.id}">Corrigir Ficha</button>`;
+  
+  showModal(`<div class="modal-head"><div><h2>${esc(r.number)}</h2></div><button class="icon-btn" data-action="close-modal">×</button></div><div class="modal-body">${body}</div><div class="modal-foot">${foot}</div>`,'lg');
+}
+
+// --- EVENTOS GLOBAIS ---
+document.getElementById('loginForm').addEventListener('submit', loginFormSubmit);
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-action]');
+  if(!btn) return;
+  const a = btn.dataset.action, id = btn.dataset.id;
+  if(a === 'logout') logout();
+  if(a === 'close-modal') closeModal();
+  if(a === 'backdrop-close' && e.target === btn) closeModal();
+  if(a === 'navigate') { currentPage = btn.dataset.page; renderApp(); }
+  if(a === 'switch-context') showContextPicker();
+  if(a === 'choose-city') chooseContext(id, null);
+  if(a === 'choose-church') chooseContext(null, id);
+  if(a === 'refresh') initSession();
+  if(a === 'new-musician') showModal(musicianEditHTML(),'lg');
+  if(a === 'view-musician') { /* Lógica para ver musico */ }
+  if(a === 'view-request') viewRequest(btn.dataset.kind, id);
+  if(a === 'edit-correction') { closeModal(); if(btn.dataset.kind==='letter') openLetterForm(id); else openRegistrationForm(id); }
+});
+
+document.getElementById('musicianForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const data = Object.fromEntries(fd.entries());
+  data.instructor = data.instructor === 'true';
+  data.baptized = data.baptized === 'true';
+  const ok = await runWithLoader('Salvando...', async () => {
+    const res = await api('apiSalvarMusico', sessionToken, e.target.dataset.editId||null, data);
+    applyAppData(res.data);
+  });
+  if(ok) { closeModal(); renderApp(); showToast('Salvo!'); }
+});
+
+// Inicialização
+initSession();
+</script>
+</body>
+</html>
