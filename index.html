@@ -308,7 +308,7 @@ async function api(fn, ...args) {
   var response = await fetch(API_URL, {
     method: 'POST',
     headers: { 
-      'Content-Type': 'text/plain;charset=utf-8' // <-- ISSO É CRUCIAL
+      'Content-Type': 'text/plain;charset=utf-8' // <-- ISSO É OBRIGATÓRIO
     },
     body: JSON.stringify({ fn: fn, args: args })
   });
