@@ -261,7 +261,7 @@ input::placeholder,textarea::placeholder{color:#7b8799;opacity:1}
 <script>
 'use strict';
 // COLE AQUI A URL DO SEU APPS SCRIPT QUE TERMINA EM /exec
-const API_URL = 'https://script.google.com/macros/s/AKfycbzbsTrdIiRFoZN8QF53j6OJFb_qb-q343uWNwQrRW65BsoQJudLAicm-7QIiuKp0P5lpQ/exec';
+const API_URL = 'SUA_URL_DO_APPS_SCRIPT_AQUI';
 
 let cityData=[],churches=[],instruments=[],musicians=[],letters=[],registrations=[],archived=[],libraryFolders=[],libraryItems=[],appUsers=[];
 let appConfig={criacaoPermitida:true,diasArquivamento:30};
@@ -310,20 +310,38 @@ async function runWithLoader(title,task){if(busy)return false;busy=true;var root
 function friendlyFail(){return 'Falha de comunicação com o servidor. Verifique sua conexão e tente novamente.';}
 
 // API COM FETCH PARA O GITHUB PAGES
-async function api(fn, ...args) {
-  var response = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 
-      'Content-Type': 'text/plain;charset=utf-8' 
-    },
-    body: JSON.stringify({ fn: fn, args: args })
-  });
-  var res = await response.json();
-  if (!res || res.ok === false) {
-    if (res && res.code === 'SESSAO_EXPIRADA') expireSession();
-    throw new Error((res && res.error) || 'Falha na operação.');
+async function api(fn) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  var callArgs = fn === 'apiLogin' ? args : [sessionToken].concat(args);
+
+  try {
+    var response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn: fn, args: callArgs })
+    });
+    
+    var text = await response.text();
+    var res;
+    try {
+      res = JSON.parse(text);
+    } catch (e) {
+      throw new Error("O servidor não devolveu um JSON válido. Verifique a URL. Resposta: " + text.substring(0, 50));
+    }
+
+    if (!res || res.ok === false) {
+      if (res && res.code === 'SESSAO_EXPIRADA') {
+        localStorage.removeItem('pm_token');
+        sessionToken = null;
+        throw new Error('Sua sessão expirou. Faça login novamente.');
+      }
+      throw new Error((res && res.error) || 'Falha na operação.');
+    }
+    return res;
+  } catch (error) {
+    console.error("Erro na API:", error);
+    throw error;
   }
-  return res;
 }
 
 function expireSession(){if(!currentUser)return;logout(false);showToast('Sua sessão expirou. Entre novamente.','error');}
@@ -335,29 +353,52 @@ function applyAppData(d){
 }
 function applyContext(c){currentUser.role=c.role;currentUser.canWrite=!!c.canWrite;if(c.type==='city'){selectedCityId=c.cityId;selectedChurchId=null;}else{selectedChurchId=c.churchId;selectedCityId=c.cityId||getChurch(c.churchId).cityId;}currentPage='dashboard';currentLibraryFolderId=null;}
 function startSession(u){currentUser={id:u.id,name:u.name,email:u.email,avatar:u.avatar,role:null,canWrite:false,churchIds:(u.churchIds||[]).slice(),cityIds:(u.cityIds||[]).slice(),contexts:(u.contexts||[]).slice()};selectedCityId=null;selectedChurchId=null;currentPage='dashboard';if(currentUser.contexts.length===1&&currentUser.contexts[0].type==='church')applyContext(currentUser.contexts[0]);}
-function loginFormSubmit(e){e.preventDefault();
+
+function loginFormSubmit(e){
+  e.preventDefault();
   var email=document.getElementById('loginEmail').value.trim(),password=document.getElementById('loginPassword').value;
   var err=document.getElementById('loginError');err.style.display='none';
   if(!email||!password){err.textContent='Informe o e-mail e a senha.';err.style.display='block';return;}
+  
   runWithLoader('Validando acesso...',async function(){
     var res;
-    try{res=await api('apiLogin',email,password);}catch(ex){err.textContent=ex.message||'Não foi possível entrar.';err.style.display='block';throw ex;}
+    try {
+      res = await api('apiLogin', email, password);
+    } catch(ex) {
+      err.textContent=ex.message||'Não foi possível entrar.';
+      err.style.display='block';
+      throw ex;
+    }
     sessionToken=res.token;
-    localStorage.setItem('pm_token', sessionToken); // Salva a sessão
-    startSession(res.data.user);applyAppData(res.data);
-  }).then(function(ok){if(!ok)return;document.getElementById('loginPassword').value='';if(currentUser.role)renderApp();else showContextPicker();});}
-function showModal(html,size){size=size||'';document.getElementById('modalRoot').innerHTML='<div class="modal-backdrop" data-action="backdrop-close"><div class="modal '+size+'" role="dialog" aria-modal="true">'+html+'</div></div>';}
-function closeModal(){document.getElementById('modalRoot').innerHTML='';}
-function contextPickerHTML(){
- var cityCtx=(currentUser.contexts||[]).filter(function(c){return c.type==='city';}),churchCtx=(currentUser.contexts||[]).filter(function(c){return c.type==='church';});
- var roleName=function(r){return ({secretaria:'Secretaria',regional:'Encarregado regional',visualizador:'Visualizador'})[r]||'Encarregado';};
- var head=(cityCtx.length&&!churchCtx.length)?['Selecionar contexto','Qual cidade deseja gerenciar?','As telas mostrarão dados da cidade escolhida.']:(!cityCtx.length?['Selecionar congregação','Qual comum / congregação deseja gerenciar?','Você tem acesso a mais de uma igreja. Escolha o contexto para continuar.']:['Selecionar contexto','Qual cidade ou congregação deseja acessar?','Você tem acessos em mais de um lugar. Escolha o contexto para continuar.']);
- var cityCards=cityCtx.map(function(x){var c=getCity(x.cityId);var names=churches.filter(function(h){return h.cityId===c.id;}).map(function(h){return h.name;}).join(' · ');var count=musicians.filter(function(m){return getChurch(m.churchId).cityId===c.id&&m.active!==false&&HIDDEN_CONDITIONS.indexOf(m.condition)<0;}).length;return '<button type="button" class="church-card" data-action="choose-city" data-id="'+c.id+'" style="text-align:left;border:1px solid var(--line);cursor:pointer"><div class="church-card-top"><div class="church-mark">⌖</div><span class="pill pill-ativo">Disponível</span></div><h3>'+esc(c.name)+' <span class="muted">· '+esc(c.state)+'</span></h3><div class="sub">'+esc(names||'Sem igreja cadastrada')+' · '+count+' músicos · '+esc(roleName(x.role))+'</div><div class="church-card-footer"><span class="small muted">Acessar cidade</span><span style="font-weight:900;color:var(--navy)">→</span></div></button>';}).join('');
- var churchCards=churchCtx.map(function(x){var c=getChurch(x.churchId);return '<button type="button" class="church-card" data-action="choose-church" data-id="'+c.id+'" style="text-align:left;border:1px solid var(--line);cursor:pointer"><div class="church-card-top"><div class="church-mark">⌂</div><span class="pill pill-ativo">Vinculada</span></div><h3>'+esc(c.name)+'</h3><div class="sub">'+esc(getCity(c.cityId).name)+' · '+esc(c.neighborhood)+(x.canWrite?'':' · Somente consulta')+'</div><div class="church-card-footer"><span class="small muted">Gerenciar esta igreja</span><span style="font-weight:900;color:var(--navy)">→</span></div></button>';}).join('');
- return '<div class="modal-head"><div><div class="eyebrow">'+head[0]+'</div><h2>'+head[1]+'</h2><p>'+head[2]+'</p></div></div><div class="modal-body"><div class="church-grid">'+cityCards+churchCards+'</div></div><div class="modal-foot"><button class="btn btn-light" data-action="logout">Sair</button></div>';}
-function showContextPicker(){showModal(contextPickerHTML(),'lg');}
-function chooseContext(cityId,churchId){var c=(currentUser.contexts||[]).find(function(x){return cityId?(x.type==='city'&&x.cityId===cityId):(x.type==='church'&&x.churchId===churchId);});if(!c)return;closeModal();applyContext(c);runWithLoader('Carregando seu painel...',async function(){await wait(120);}).then(function(ok){if(ok)renderApp();});}
-function switchContext(){showContextPicker();}
+    localStorage.setItem('pm_token', sessionToken);
+    startSession(res.data.user);
+    applyAppData(res.data);
+  }).then(function(ok){
+    if(!ok)return;
+    document.getElementById('loginPassword').value='';
+    if(currentUser.role) renderApp(); else showContextPicker();
+  });
+}
+
+async function initSession() {
+  if(!sessionToken) {
+    document.getElementById('loginView').classList.remove('hidden');
+    return;
+  }
+  try {
+    var res = await api('apiGetAppData');
+    startSession(res.data.user);
+    applyAppData(res.data);
+    document.getElementById('loginView').classList.add('hidden');
+    if(!currentUser.role) showContextPicker(); else renderApp();
+  } catch(e) {
+    console.error("Erro ao restaurar sessão:", e);
+    localStorage.removeItem('pm_token');
+    sessionToken = null;
+    document.getElementById('loginView').classList.remove('hidden');
+  }
+}
+
 function logout(callServer){
   if(callServer===undefined)callServer=true;
   localStorage.removeItem('pm_token');
@@ -371,6 +412,20 @@ function logout(callServer){
   document.getElementById('loginForm').reset();
   document.getElementById('loginError').style.display='none';
 }
+
+function showModal(html,size){size=size||'';document.getElementById('modalRoot').innerHTML='<div class="modal-backdrop" data-action="backdrop-close"><div class="modal '+size+'" role="dialog" aria-modal="true">'+html+'</div></div>';}
+function closeModal(){document.getElementById('modalRoot').innerHTML='';}
+function contextPickerHTML(){
+ var cityCtx=(currentUser.contexts||[]).filter(function(c){return c.type==='city';}),churchCtx=(currentUser.contexts||[]).filter(function(c){return c.type==='church';});
+ var roleName=function(r){return ({secretaria:'Secretaria',regional:'Encarregado regional',visualizador:'Visualizador'})[r]||'Encarregado';};
+ var head=(cityCtx.length&&!churchCtx.length)?['Selecionar contexto','Qual cidade deseja gerenciar?','As telas mostrarão dados da cidade escolhida.']:(!cityCtx.length?['Selecionar congregação','Qual comum / congregação deseja gerenciar?','Você tem acesso a mais de uma igreja. Escolha o contexto para continuar.']:['Selecionar contexto','Qual cidade ou congregação deseja acessar?','Você tem acessos em mais de um lugar. Escolha o contexto para continuar.']);
+ var cityCards=cityCtx.map(function(x){var c=getCity(x.cityId);var names=churches.filter(function(h){return h.cityId===c.id;}).map(function(h){return h.name;}).join(' · ');var count=musicians.filter(function(m){return getChurch(m.churchId).cityId===c.id&&m.active!==false&&HIDDEN_CONDITIONS.indexOf(m.condition)<0;}).length;return '<button type="button" class="church-card" data-action="choose-city" data-id="'+c.id+'" style="text-align:left;border:1px solid var(--line);cursor:pointer"><div class="church-card-top"><div class="church-mark">⌖</div><span class="pill pill-ativo">Disponível</span></div><h3>'+esc(c.name)+' <span class="muted">· '+esc(c.state)+'</span></h3><div class="sub">'+esc(names||'Sem igreja cadastrada')+' · '+count+' músicos · '+esc(roleName(x.role))+'</div><div class="church-card-footer"><span class="small muted">Acessar cidade</span><span style="font-weight:900;color:var(--navy)">→</span></div></button>';}).join('');
+ var churchCards=churchCtx.map(function(x){var c=getChurch(x.churchId);return '<button type="button" class="church-card" data-action="choose-church" data-id="'+c.id+'" style="text-align:left;border:1px solid var(--line);cursor:pointer"><div class="church-card-top"><div class="church-mark">⌂</div><span class="pill pill-ativo">Vinculada</span></div><h3>'+esc(c.name)+'</h3><div class="sub">'+esc(getCity(c.cityId).name)+' · '+esc(c.neighborhood)+(x.canWrite?'':' · Somente consulta')+'</div><div class="church-card-footer"><span class="small muted">Gerenciar esta igreja</span><span style="font-weight:900;color:var(--navy)">→</span></div></button>';}).join('');
+ return '<div class="modal-head"><div><div class="eyebrow">'+head[0]+'</div><h2>'+head[1]+'</h2><p>'+head[2]+'</p></div></div><div class="modal-body"><div class="church-grid">'+cityCards+churchCards+'</div></div><div class="modal-foot"><button class="btn btn-light" data-action="logout">Sair</button></div>';}
+function showContextPicker(){showModal(contextPickerHTML(),'lg');}
+function chooseContext(cityId,churchId){var c=(currentUser.contexts||[]).find(function(x){return cityId?(x.type==='city'&&x.cityId===cityId):(x.type==='church'&&x.churchId===churchId);});if(!c)return;closeModal();applyContext(c);runWithLoader('Carregando seu painel...',async function(){await wait(120);}).then(function(ok){if(ok)renderApp();});}
+function switchContext(){showContextPicker();}
+
 function navIcon(id){
  var svg={
   dashboard:'<rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="8" width="4" height="13" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/>',
@@ -702,10 +757,12 @@ function viewMusician(id){var m=musicians.find(function(x){return x.id===id;});i
 function openAlterationForMusician(id){var m=musicians.find(function(x){return x.id===id;});if(!m)return;preselectedAlterMusicianId=id;closeModal();currentPage='registrations';renderApp();openRegistrationForm();preselectedAlterMusicianId='';}
 function deleteMusician(id){var m=musicians.find(function(x){return x.id===id;});if(!m)return;if(!isSecretary())return;showModal('<div class="modal-head"><div><div class="eyebrow">Excluir músico</div><h2>Confirmar exclusão</h2><p>Esta ação remove a ficha oficial e todas as solicitações vinculadas.</p></div><button class="icon-btn" data-action="close-modal">×</button></div><div class="modal-body"><div class="notice" style="margin-bottom:0"><span class="symbol">⚠</span><div>Ao excluir <b>'+esc(m.name)+'</b>, todas as cartas e cadastros vinculados a este músico serão apagados. Deseja continuar?</div></div></div><div class="modal-foot"><button class="btn btn-light" data-action="close-modal">Cancelar</button><button class="btn btn-danger" data-action="confirm-delete-musician" data-id="'+m.id+'">Sim, excluir</button></div>','sm');}
 async function confirmDeleteMusician(id){var ok=await runWithLoader('Excluindo músico...',async function(){var res=await api('apiExcluirMusico',id);applyAppData(res.data);});if(!ok)return;closeModal();renderApp();showToast('Músico e solicitações vinculadas foram excluídos.');}
-function musicianEditHTML(m){m=m||null;return '<div class="modal-head"><div><div class="eyebrow">Base oficial</div><h2>'+(m?'Editar ficha':'Cadastrar músico')+'</h2><p>As alterações oficiais devem ser registradas no histórico.</p></div><button class="icon-btn" data-action="close-modal">×</button></div><form id="musicianForm" data-edit-id="'+(m?m.id:'')+'" novalidate><div class="modal-body"><div class="form-grid"><div class="field"><label for="mfName">Nome completo *</label><input id="mfName" name="name" required value="'+esc(m?m.name:'')+'" placeholder="Digite o nome completo" /></div><div class="field"><label for="mfCommon">Comum *</label><input id="mfCommon" name="common" required value="'+esc(m?m.common:getChurch(selectedChurchId||(cityChurches()[0]?cityChurches()[0].id:'')).name)+'" placeholder="Informe a comum/congregação" /></div><div class="field"><label for="mfChurch">Casa de oração *</label><select id="mfChurch" name="churchId" required>'+cityChurches().map(function(c){return '<option value="'+c.id+'" '+((m?m.churchId:(selectedChurchId||c.id))===c.id?'selected':'')+'>'+esc(c.name)+'</option>';}).join('')+'</select></div><div class="field"><label for="mfPhone">Telefone *</label><input type="tel" id="mfPhone" name="phone" required value="'+esc(m?m.phone:'')+'" placeholder="Ex.: (13) 99999-9999" /></div><div class="field"><label for="mfEmail">E-mail *</label><input type="email" id="mfEmail" name="email" required value="'+esc(m?m.email:'')+'" placeholder="Ex.: nome@exemplo.com" /></div><div class="field"><label for="mfInstrument">Instrumento *</label><select id="mfInstrument" name="instrumentId" required><option value="" '+(!m||!m.instrumentId?'selected':'')+'>Selecione o instrumento</option>'+instruments.map(function(i){return '<option value="'+i.id+'" '+(m&&m.instrumentId===i.id?'selected':'')+'>'+esc(i.name)+'</option>';}).join('')+'</select></div><div class="field"><label for="mfTuning">Afinação *</label><input id="mfTuning" name="tuning" required value="'+esc(m?m.tuning:'')+'" placeholder="Ex.: Si bemol, Lá ou Dó" /></div><div class="field"><label for="mfCondition">Condição *</label><select id="mfCondition" name="condition" required><option value="" '+(!m||!m.condition?'selected':'')+'>Selecione a condição do músico</option>'+Object.keys(conditionNames).map(function(k){return '<option value="'+k+'" '+(m&&m.condition===k?'selected':'')+'>'+conditionNames[k]+'</option>';}).join('')+'</select></div><div class="field"><label for="mfInstructor">Instrutor? *</label><select id="mfInstructor" name="instructor" required><option value="" '+(m&&m.instructor==null?'selected':'')+'>Selecione sim ou não</option><option value="false" '+(m&&m.instructor===false?'selected':'')+'>Não</option><option value="true" '+(m&&m.instructor===true?'selected':'')+'>Sim</option></select></div><div class="field"><label for="mfBaptized">Batizado? *</label><select id="mfBaptized" name="baptized" required><option value="" '+(m&&m.baptized==null?'selected':'')+'>Selecione sim ou não</option><option value="false" '+(m&&m.baptized===false?'selected':'')+'>Não</option><option value="true" '+(m&&m.baptized===true?'selected':'')+'>Sim</option></select></div><div class="field hidden" id="mfBaptismDateWrap"><label for="mfBaptismDate">Data do batismo</label><input type="date" id="mfBaptismDate" name="baptismDate" value="'+esc(m?m.baptismDate:'')+'" title="Selecione a data do batismo" /></div></div></div><div class="modal-foot"><button type="button" class="btn btn-light" data-action="close-modal">Cancelar</button><button type="submit" class="btn btn-primary">Salvar ficha</button></div></form>';}
+function musicianEditHTML(m){m=m||null;
+ // CORREÇÃO: Campo "Comum" removido para não duplicar com "Casa de Oração"
+ return '<div class="modal-head"><div><div class="eyebrow">Base oficial</div><h2>'+(m?'Editar ficha':'Cadastrar músico')+'</h2><p>As alterações oficiais devem ser registradas no histórico.</p></div><button class="icon-btn" data-action="close-modal">×</button></div><form id="musicianForm" data-edit-id="'+(m?m.id:'')+'" novalidate><div class="modal-body"><div class="form-grid"><div class="field"><label for="mfName">Nome completo *</label><input id="mfName" name="name" required value="'+esc(m?m.name:'')+'" placeholder="Digite o nome completo" /></div><div class="field"><label for="mfChurch">Casa de oração *</label><select id="mfChurch" name="churchId" required>'+cityChurches().map(function(c){return '<option value="'+c.id+'" '+((m?m.churchId:(selectedChurchId||c.id))===c.id?'selected':'')+'>'+esc(c.name)+'</option>';}).join('')+'</select></div><div class="field"><label for="mfPhone">Telefone *</label><input type="tel" id="mfPhone" name="phone" required value="'+esc(m?m.phone:'')+'" placeholder="Ex.: (13) 99999-9999" /></div><div class="field"><label for="mfEmail">E-mail *</label><input type="email" id="mfEmail" name="email" required value="'+esc(m?m.email:'')+'" placeholder="Ex.: nome@exemplo.com" /></div><div class="field"><label for="mfInstrument">Instrumento *</label><select id="mfInstrument" name="instrumentId" required><option value="" '+(!m||!m.instrumentId?'selected':'')+'>Selecione o instrumento</option>'+instruments.map(function(i){return '<option value="'+i.id+'" '+(m&&m.instrumentId===i.id?'selected':'')+'>'+esc(i.name)+'</option>';}).join('')+'</select></div><div class="field"><label for="mfTuning">Afinação *</label><input id="mfTuning" name="tuning" required value="'+esc(m?m.tuning:'')+'" placeholder="Ex.: Si bemol, Lá ou Dó" /></div><div class="field"><label for="mfCondition">Condição *</label><select id="mfCondition" name="condition" required><option value="" '+(!m||!m.condition?'selected':'')+'>Selecione a condição do músico</option>'+Object.keys(conditionNames).map(function(k){return '<option value="'+k+'" '+(m&&m.condition===k?'selected':'')+'>'+conditionNames[k]+'</option>';}).join('')+'</select></div><div class="field"><label for="mfInstructor">Instrutor? *</label><select id="mfInstructor" name="instructor" required><option value="" '+(m&&m.instructor==null?'selected':'')+'>Selecione sim ou não</option><option value="false" '+(m&&m.instructor===false?'selected':'')+'>Não</option><option value="true" '+(m&&m.instructor===true?'selected':'')+'>Sim</option></select></div><div class="field"><label for="mfBaptized">Batizado? *</label><select id="mfBaptized" name="baptized" required><option value="" '+(m&&m.baptized==null?'selected':'')+'>Selecione sim ou não</option><option value="false" '+(m&&m.baptized===false?'selected':'')+'>Não</option><option value="true" '+(m&&m.baptized===true?'selected':'')+'>Sim</option></select></div><div class="field hidden" id="mfBaptismDateWrap"><label for="mfBaptismDate">Data do batismo</label><input type="date" id="mfBaptismDate" name="baptismDate" value="'+esc(m?m.baptismDate:'')+'" title="Selecione a data do batismo" /></div></div></div><div class="modal-foot"><button type="button" class="btn btn-light" data-action="close-modal">Cancelar</button><button type="submit" class="btn btn-primary">Salvar ficha</button></div></form>';}
 function toggleMusicianBaptism(){var sel=document.getElementById('mfBaptized'),date=document.getElementById('mfBaptismDate'),wrap=document.getElementById('mfBaptismDateWrap');if(!sel||!date||!wrap)return;var required=sel.value==='true';wrap.classList.toggle('hidden',!required);date.required=required;if(!required)date.value='';var label=wrap.querySelector('label');if(label)label.textContent=required?'Data do batismo *':'Data do batismo';}
 function openEditMusician(id){if(!isSecretary())return;var m=musicians.find(function(x){return x.id===id;});showModal(musicianEditHTML(m),'lg');toggleMusicianBaptism();}
-async function saveMusician(form){var d=formData(form);if(d.baptized==='true'&&!d.baptismDate)throw new Error('Preencha a data do batismo.');var editId=form.dataset.editId||null;var payload={name:d.name,common:d.common,churchId:d.churchId||(selectedChurchId||(cityChurches()[0]?cityChurches()[0].id:'')),phone:d.phone,email:d.email,instrumentId:d.instrumentId,tuning:d.tuning,condition:d.condition,instructor:d.instructor==='true',baptized:d.baptized==='true',baptismDate:d.baptismDate||''};var ok=await runWithLoader('Salvando ficha do músico...',async function(){var res=await api('apiSalvarMusico',editId,payload);applyAppData(res.data);});if(!ok)return;closeModal();renderApp();showToast(editId?'Ficha atualizada.':'Músico cadastrado.');}
+async function saveMusician(form){var d=formData(form);if(d.baptized==='true'&&!d.baptismDate)throw new Error('Preencha a data do batismo.');var editId=form.dataset.editId||null;var payload={name:d.name,common:getChurch(d.churchId).name,churchId:d.churchId||(selectedChurchId||(cityChurches()[0]?cityChurches()[0].id:'')),phone:d.phone,email:d.email,instrumentId:d.instrumentId,tuning:d.tuning,condition:d.condition,instructor:d.instructor==='true',baptized:d.baptized==='true',baptismDate:d.baptismDate||''};var ok=await runWithLoader('Salvando ficha do músico...',async function(){var res=await api('apiSalvarMusico',editId,payload);applyAppData(res.data);});if(!ok)return;closeModal();renderApp();showToast(editId?'Ficha atualizada.':'Músico cadastrado.');}
 function showArchive(id){var a=archived.find(function(x){return x.id===id;});if(!a)return;showModal('<div class="modal-head"><div><div class="eyebrow">Registro arquivado</div><h2>'+esc(a.number)+'</h2><p>Consulta de uma solicitação concluída.</p></div><button class="icon-btn" data-action="close-modal">×</button></div><div class="modal-body">'+detailFields([['Nome',esc(a.name)],['Tipo',esc(a.type)],['Igreja',esc(getChurch(a.churchId).name)],['Concluída em',fmtDateTime(a.concludedAt)],['Status',statusPill(a.status)]])+'</div><div class="modal-foot"><button class="btn btn-light" data-action="close-modal">Fechar</button></div>','sm');}
 function openDoc(id){var x=libraryItems.find(function(d){return d.id===id;});if(!x)return;var safe=/^https?:\/\//i.test(x.link||'');showModal('<div class="modal-head"><div><div class="eyebrow">Biblioteca</div><h2>'+esc(x.title)+'</h2><p>'+esc(x.category)+' · '+esc(x.type)+'</p></div><button class="icon-btn" data-action="close-modal">×</button></div><div class="modal-body"><div class="detail-grid"><div class="detail-field full"><label>Descrição</label><span>'+esc(x.description||'—')+'</span></div><div class="detail-field full"><label>Link</label><span style="word-break:break-all">'+esc(x.link||'—')+'</span></div></div></div><div class="modal-foot"><button class="btn btn-light" data-action="close-modal">Fechar</button>'+(isSecretary()?('<button class="btn btn-primary" data-action="lib-edit-file" data-id="'+x.id+'">Editar arquivo</button>'):'')+(safe?('<a class="btn btn-primary" href="'+esc(x.link)+'" target="_blank" rel="noopener noreferrer" style="text-decoration:none">Abrir material ↗</a>'):'')+'</div>','sm');}
 function libVisibilityOptions(selectedChurches,selectedCities){selectedChurches=selectedChurches||[];selectedCities=selectedCities||[];return '<div class="field"><label>Visível para igrejas</label><div style="display:flex;flex-wrap:wrap;gap:6px;max-height:160px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px">'+churches.filter(function(c){return isSecretary()?true:(currentUser&&currentUser.cityIds||[]).indexOf(c.cityId)>=0||(currentUser&&currentUser.churchIds||[]).indexOf(c.id)>=0;}).map(function(c){return '<label class="checkbox-line" style="font-size:12px"><input type="checkbox" name="visibleChurch" value="'+c.id+'" '+(selectedChurches.indexOf(c.id)>=0?'checked':'')+'>'+esc(c.name)+'</label>';}).join('')+'</div></div><div class="field"><label>Ou cidades inteiras</label><div style="display:flex;flex-wrap:wrap;gap:6px;border:1px solid var(--line);border-radius:8px;padding:8px">'+cityData.map(function(c){return '<label class="checkbox-line" style="font-size:12px"><input type="checkbox" name="visibleCity" value="'+c.id+'" '+(selectedCities.indexOf(c.id)>=0?'checked':'')+'>'+esc(c.name)+'</label>';}).join('')+'</div></div>';}
@@ -723,6 +780,9 @@ document.addEventListener('input',function(e){if(e.target.hasAttribute('aria-inv
 document.addEventListener('click',function(e){var sortTh=e.target.closest('[data-sort-action]');if(sortTh){e.preventDefault();var action=sortTh.dataset.sortAction;var key=sortTh.dataset.sortKey;if(action==='request')updateSortState(requestSort,key);else if(action==='musician')updateSortState(musicianSort,key);else if(action==='archive')updateSortState(archiveSort,key);renderApp();return;}var btn=e.target.closest('[data-action]');if(!btn)return;var a=btn.dataset.action,id=btn.dataset.id;switch(a){case'navigate':navigate(btn.dataset.page);break;case'choose-city':chooseContext(id,null);break;case'choose-church':chooseContext(null,id);break;case'logout':logout();break;case'switch-context':switchContext();break;case'close-modal':closeModal();break;case'backdrop-close':if(e.target===btn)closeModal();break;case'close-mobile':mobileOpen=false;var sb=document.getElementById('sidebar');if(sb)sb.classList.remove('open');var mo=document.getElementById('mobileOverlay');if(mo)mo.classList.remove('show');var tm=document.querySelector('[data-action="toggle-mobile"]');if(tm)tm.setAttribute('aria-expanded','false');document.body.classList.remove('mobile-nav-open');break;case'toggle-mobile':mobileOpen=!mobileOpen;var sb2=document.getElementById('sidebar');if(sb2)sb2.classList.toggle('open',mobileOpen);var mo2=document.getElementById('mobileOverlay');if(mo2)mo2.classList.toggle('show',mobileOpen);btn.setAttribute('aria-expanded',String(mobileOpen));document.body.classList.toggle('mobile-nav-open',mobileOpen);break;case'refresh':refreshData();break;case'city-overview':selectedChurchId=null;currentPage='dashboard';renderApp();break;case'new-letter':openLetterForm();break;case'new-registration':openRegistrationForm();break;case'view-request':viewRequest(btn.dataset.kind,id);break;case'edit-correction':closeModal();if(btn.dataset.kind==='letter')openLetterForm(id);else openRegistrationForm(id);break;case'save-request-status':saveRequestStatus(btn.dataset.kind,id);break;case'view-musician':viewMusician(id);break;case'request-musician-change':openAlterationForMusician(id);break;case'new-musician':showModal(musicianEditHTML(),'lg');toggleMusicianBaptism();break;case'edit-musician':closeModal();openEditMusician(id);break;case'delete-musician':deleteMusician(id);break;case'confirm-delete-musician':confirmDeleteMusician(id);break;case'open-church':openChurch(id);break;case'open-doc':openDoc(id);break;case'view-archive':showArchive(id);break;case'new-user':openUserForm(null);break;case'edit-user':openUserForm(id);break;case'user-add-perm':userAddPerm();break;case'user-remove-perm':userRemovePerm(Number(btn.dataset.index));break;case'user-save':userSave();break;case'coming-soon':closeModal();showToast('Este controle será conectado ao backend na próxima etapa.');break;case'lib-add':openLibraryAdd();break;case'lib-open-folder':currentLibraryFolderId=id;renderApp();break;case'lib-root':currentLibraryFolderId=null;renderApp();break;case'lib-new-folder':closeModal();openFolderForm();break;case'lib-edit-folder':openFolderForm(id);break;case'lib-new-file':closeModal();showModal(fileFormHTML(),'lg');break;case'lib-edit-file':openFileForm(id);break;case'lib-delete-file':deleteFile(id);break;case'lib-confirm-delete-file':confirmDeleteFile(id);break;}}
 );
 function openFileForm(id){var item=id?libraryItems.find(function(i){return i.id===id;}):null;showModal(fileFormHTML(item),'lg');}
+
+// Inicialização do Auto-Login
+initSession();
 </script>
 </body>
 </html>
